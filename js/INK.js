@@ -78,7 +78,7 @@ var ink = function(){
 			};
 		};
 		
-		// IE doesn't support indexOf...so...yeah
+		// Make sure indexOf exists
 		if(!Array.indexOf){
 			Array.prototype.indexOf = function(obj){
 				for(var i=0; i<this.length; i++){
@@ -197,10 +197,10 @@ var ink = function(){
 		}
 	}
 	
+	init(); // BOOM
 	
 	return {
 		init : init,
 		copy : copy
 	}
 }();
-ink.init();
