@@ -1,8 +1,22 @@
+/* ------------------------------------------------------------------------
+	INK - Own your content plugin.
+	Version: 1.0.1
+	Description: INK add credits back to your site everytime a user copy/paste content.
+	Website: http://www.no-margin-for-errors.com/projects/ink-own-your-content/
+------------------------------------------------------------------------- */
+
 var ink = function(){
-	var url_to_share;
+	var url_to_share, enabled, hide_timeout;
 	
 	var settings = {
 		copied_content_layout: '"{copied_content}"\n\rRead more about {title} on:\r\n{page_url}',
+		display_notice: true,
+		notice_content: ' \
+		<a href="#" onclick="ink.hide_notice(); return false;" style="color: #fff;position: absolute; right: 10px; top: 5px; font-size: 10px;">Close</a> \
+		<p style="color: #fff; margin: 0;"> \
+			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/" target="_blank" style="color: #fff;">INK</a> has been applied to the content you\'ve just copied<br /> \
+			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/" target="_blank" style="color: #fff;">What is INK?</a> | <a href="http://ink.nmfe.co/set-status.php?status=off" target="_blank" style="color: #fff;">Disable INK</a> \
+		</p>',
 		google_analytics : {
 			utm_source:'website',
 			utm_medium:'share',
@@ -78,6 +92,12 @@ var ink = function(){
 			};
 		};
 		
+		// Call home to make sure users allow INK to run
+		request = 'http://ink.nmfe.co/read-status.php?callback=ink.status';
+		aObj = new JSONscriptRequest(request);
+		aObj.buildScriptTag();
+		aObj.addScriptTag();
+		
 		// Make sure indexOf exists
 		if(!Array.indexOf){
 			Array.prototype.indexOf = function(obj){
@@ -98,23 +118,23 @@ var ink = function(){
 			parent_node;
 		
 		if (document.selection) {
-			scroll_cache = document.documentElement.scrollTop;
+			scroll_cache = _get_scroll();
 			
 			// Create a fragment, I need to do this because what htmlText is a string and I need to be able to parse the node tree
 			var frag = document.createElement('div');
 			frag.style.display = 'none';
-			frag.setAttribute('id','pc_frag');
+			frag.setAttribute('id','ink_frag');
 			frag.innerHTML = cached_selected_content.range.htmlText;
 			document.body.appendChild(frag); // Append to retrieve the node tree
-			children_nodes = document.getElementById('pc_frag'); // Cache the element
-			document.getElementById('pc_frag').removeNode(true); // Don't need it anymore
+			children_nodes = document.getElementById('ink_frag'); // Cache the element
+			document.getElementById('ink_frag').removeNode(true); // Don't need it anymore
 			parent_node = cached_selected_content.range.parentElement();
 		}else{
 			children_nodes = cached_selected_content.range.cloneContents();
 			parent_node = cached_selected_content.selection.anchorNode.parentNode;
 		}
 
-		if(!_validate_content(children_nodes,parent_node,'down')) return;
+		if(!_validate_content(children_nodes,parent_node,'down') || !enabled) return;
 		
 		if(settings.google_analytics)
 			_track_google_analytic_event(cached_selected_content.selection);
@@ -131,7 +151,6 @@ var ink = function(){
 		// Re-select the content the user selected to maintain a good ux.
 		setTimeout(function(){
 			if(document.selection){ // IE
-				
 				cached_selected_content.range.select();
 				document.documentElement.scrollTop = scroll_cache;
 			}else{ // The others
@@ -139,8 +158,42 @@ var ink = function(){
 				currSelection.removeAllRanges();
 				currSelection.addRange(cached_selected_content.range)
 			}
+			
+			_display_notice();
 		},1);
 	};
+	
+	function _display_notice(){
+		if(typeof notice == 'undefined') {
+			notice = document.createElement('div');
+			notice.innerHTML = settings.notice_content;
+			
+			notice.setAttribute('style','background: rgba(0,0,0,0.7); position: absolute; border-radius: 10px; -moz-border-radius: 10px; -webkit-border-radius: 10px; -moz-box-shadow: 0px 0px 10px rgba(0,0,0,0.8); -webkit-box-shadow: 0px 0px 10px rgba(0,0,0,0.8); box-shadow: 0px 0px 10px rgba(0,0,0,0.8);')
+			if(document.selection)
+				notice.style.backgroundColor = '#000';
+			notice.style.fontSize = "11px";
+			notice.style.paddingTop = "20px";
+			notice.style.paddingRight = "10px";
+			notice.style.paddingBottom = "15px";
+			notice.style.paddingLeft = "10px";
+			notice.style.position = "absolute";
+			notice.style.top = (_get_scroll() + 25) + 'px';
+			notice.style.right = '25px';
+			notice.style.zIndex = 10000;
+			notice.setAttribute('id','ink_notice');
+			document.body.appendChild(notice);
+		
+			hide_timeout = window.setTimeout(function(){
+				hide_notice();
+			},5000);
+		}
+	}
+	
+	function hide_notice(){
+		clearTimeout(hide_timeout);
+		document.body.removeChild(notice);
+		delete notice;
+	}
 	
 	function _validate_content(children_nodes,parent_node,direction){
 		var node_class, node_name;
@@ -174,12 +227,6 @@ var ink = function(){
 		return true;
 	}
 	
-	function _track_google_analytic_event(shared_content){
-		if(typeof _gaq != 'undefined'){ // Make sure GA is installed
-			_gaq.push(['_trackEvent', 'Share', 'Copy', location.href, shared_content]);
-		}
-	}
-	
 	function _getSelectedContent() {
 		if (window.getSelection){
 			return {
@@ -201,10 +248,76 @@ var ink = function(){
 		}
 	}
 	
+	// If Google Analytics is installed, INK will automatically track content.
+	function _track_google_analytic_event(shared_content){
+		if(typeof _gaq != 'undefined'){ // Make sure GA is installed
+			_gaq.push(['_trackEvent', 'INK', 'Copy', shared_content]);
+		}
+	}
+	
+	// Callback function on the INK status check.
+	function status(jsonData) {
+		enabled = (jsonData.status == 'on' || jsonData.status == null) ? true : false;
+	}
+	
+	function JSONscriptRequest(fullUrl) {
+	    // REST request path
+	    this.fullUrl = fullUrl; 
+	    // Keep IE from caching requests
+	    this.noCacheIE = '&noCacheIE=' + (new Date()).getTime();
+	    // Get the DOM location to put the script tag
+	    this.headLoc = document.getElementsByTagName("head").item(0);
+	    // Generate a unique script tag id
+	    this.scriptId = 'JscriptId' + JSONscriptRequest.scriptCounter++;
+	}
+
+	// Static script ID counter
+	JSONscriptRequest.scriptCounter = 1;
+
+	// buildScriptTag method
+	//
+	JSONscriptRequest.prototype.buildScriptTag = function () {
+
+	    // Create the script tag
+	    this.scriptObj = document.createElement("script");
+
+	    // Add script object attributes
+	    this.scriptObj.setAttribute("type", "text/javascript");
+	    this.scriptObj.setAttribute("charset", "utf-8");
+	    this.scriptObj.setAttribute("src", this.fullUrl + this.noCacheIE);
+	    this.scriptObj.setAttribute("id", this.scriptId);
+	}
+
+	// removeScriptTag method
+	// 
+	JSONscriptRequest.prototype.removeScriptTag = function () {
+	    // Destroy the script tag
+	    this.headLoc.removeChild(this.scriptObj);  
+	}
+
+	// addScriptTag method
+	//
+	JSONscriptRequest.prototype.addScriptTag = function () {
+	    // Create the script tag
+	    this.headLoc.appendChild(this.scriptObj);
+	}
+	
+	function _get_scroll(){
+		if (self.pageYOffset) {
+			return self.pageYOffset;
+		} else if (document.documentElement && document.documentElement.scrollTop) { // Explorer 6 Strict
+			return document.documentElement.scrollTop;
+		} else if (document.body) {// all other Explorers
+			return document.body.scrollTop;
+		};
+	};
+	
 	init(); // BOOM
 	
 	return {
 		init : init,
+		status: status,
+		hide_notice: hide_notice,
 		copy : copy
 	}
 }();
