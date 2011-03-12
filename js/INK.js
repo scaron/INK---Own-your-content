@@ -98,6 +98,8 @@ var ink = function(){
 			parent_node;
 		
 		if (document.selection) {
+			scroll_cache = document.documentElement.scrollTop;
+			
 			// Create a fragment, I need to do this because what htmlText is a string and I need to be able to parse the node tree
 			var frag = document.createElement('div');
 			frag.style.display = 'none';
@@ -129,7 +131,9 @@ var ink = function(){
 		// Re-select the content the user selected to maintain a good ux.
 		setTimeout(function(){
 			if(document.selection){ // IE
+				
 				cached_selected_content.range.select();
+				document.documentElement.scrollTop = scroll_cache;
 			}else{ // The others
 				var currSelection = window.getSelection();
 				currSelection.removeAllRanges();
