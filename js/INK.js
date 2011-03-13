@@ -1,26 +1,25 @@
 /* ------------------------------------------------------------------------
 	INK - Own your content plugin.
-	Version: 1.0.1
+	Version: 1.0.2
 	Description: INK add credits back to your site everytime a user copy/paste content.
 	Website: http://www.no-margin-for-errors.com/projects/ink-own-your-content/
 ------------------------------------------------------------------------- */
 
 var ink = function(){
-	var url_to_share, enabled, hide_timeout;
+	var url_to_share, enabled, hide_timeout, ads_enabled;
 	
 	var settings = {
 		copied_content_layout: '"{copied_content}"\n\rRead more about {title} on:\r\n{page_url}',
-		display_notice: true,
 		notice_content: ' \
 		<a href="#" onclick="ink.hide_notice(); return false;" style="color: #fff;position: absolute; right: 10px; top: 5px; font-size: 10px;">Close</a> \
 		<p style="color: #fff; margin: 0;"> \
-			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/" target="_blank" style="color: #fff;">INK</a> has been applied to the content you\'ve just copied<br /> \
-			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/" target="_blank" style="color: #fff;">What is INK?</a> | <a href="http://ink.nmfe.co/set-status.php?status=off" target="_blank" style="color: #fff;">Disable INK</a> \
+			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #fff;">INK</a> has been applied to the content you\'ve just copied<br /> \
+			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #fff;">What is INK?</a> | <a href="http://ink.nmfe.co/set-status.php?status=off&utm_source=INK&utm_medium=notice" target="_blank" style="color: #fff;">Disable INK</a> \
 		</p>',
 		google_analytics : {
-			utm_source:'website',
-			utm_medium:'share',
-			utm_campaign:'copy'
+			utm_source:'INK',
+			utm_medium:'copy',
+			utm_campaign:'share'
 		},
 		onBeforeCopy: function(){
 			
@@ -92,8 +91,10 @@ var ink = function(){
 			};
 		};
 		
+		if(typeof ink_license == 'undefined') ink_license = false;
+		
 		// Call home to make sure users allow INK to run
-		request = 'http://ink.nmfe.co/read-status.php?callback=ink.status';
+		request = 'http://ink.nmfe.co/read-status.php?callback=ink.status&license='+ink_license;
 		aObj = new JSONscriptRequest(request);
 		aObj.buildScriptTag();
 		aObj.addScriptTag();
@@ -166,26 +167,36 @@ var ink = function(){
 	function _display_notice(){
 		if(typeof notice == 'undefined') {
 			notice = document.createElement('div');
-			notice.innerHTML = settings.notice_content;
+			notice.innerHTML = settings.notice_content
+			
+			if(ads_enabled)
+				 notice.innerHTML += '<div id="bsap_1258551" class="bsarocks bsap_d49a0984d0f377271ccbf01a33f2b6d6" style="color: #fff; width: 340px; margin-top: 10px;"></div>';
 			
 			notice.setAttribute('style','background: rgba(0,0,0,0.7); position: absolute; border-radius: 10px; -moz-border-radius: 10px; -webkit-border-radius: 10px; -moz-box-shadow: 0px 0px 10px rgba(0,0,0,0.8); -webkit-box-shadow: 0px 0px 10px rgba(0,0,0,0.8); box-shadow: 0px 0px 10px rgba(0,0,0,0.8);')
 			if(document.selection)
 				notice.style.backgroundColor = '#000';
-			notice.style.fontSize = "11px";
+			notice.style.fontSize = "12px";
 			notice.style.paddingTop = "20px";
 			notice.style.paddingRight = "10px";
 			notice.style.paddingBottom = "15px";
 			notice.style.paddingLeft = "10px";
 			notice.style.position = "absolute";
+			notice.style.textAlign = 'left';
 			notice.style.top = (_get_scroll() + 25) + 'px';
 			notice.style.right = '25px';
 			notice.style.zIndex = 10000;
 			notice.setAttribute('id','ink_notice');
 			document.body.appendChild(notice);
+			
+			if(ads_enabled)
+				_bsap.exec();
+			
 		
 			hide_timeout = window.setTimeout(function(){
 				hide_notice();
-			},5000);
+			},1000 * 10);
+		}else{
+			notice.style.top = (_get_scroll() + 25) + 'px';
 		}
 	}
 	
@@ -258,6 +269,31 @@ var ink = function(){
 	// Callback function on the INK status check.
 	function status(jsonData) {
 		enabled = (jsonData.status == 'on' || jsonData.status == null) ? true : false;
+		ads_enabled = (jsonData.ads_status == true || jsonData.ads_status == null) ? true : false;
+		
+		// Inject BSA if it's not installed and if INK is unlicensed
+		if(typeof _bsap == 'undefined' && ads_enabled){
+			(function(){
+				var bsa = document.createElement('script');
+					bsa.type = 'text/javascript';
+					bsa.async = true;
+					bsa.src = '//s3.buysellads.com/ac/bsa.js';
+					(document.getElementsByTagName('head')[0]||document.getElementsByTagName('body')[0]).appendChild(bsa);
+			})();
+		}
+		
+		if(ads_enabled){ // Inject BSA styling
+			var cssStr = "#bsap_1258551 em.bd,#bsap_1258551 em.bt { color: #ccc !important; font-size: 11px; } #bsap_1258551 a,#bsap_1258551 a:hover { background: none !important; } #bsap_1258551 a:hover .bwr { background: #666 !important; } #bsap_1258551 ul.bsa_ads li,#bsap_1258551 div.bsa_idb, #bsap_1258551 div.bsa_idb .bsa_idl, #bsap_1258551 div.bsa_idb a { background: none !important; width: 325px;  margin-top: 5px; display: block; }";
+			var style = document.createElement("style");
+			style.setAttribute("type", "text/css");
+			if(style.styleSheet){ // IE
+				style.styleSheet.cssText = cssStr;
+			} else { // w3c
+				var cssText = document.createTextNode(cssStr);
+				style.appendChild(cssText);
+			}
+			(document.getElementsByTagName('head')[0]||document.getElementsByTagName('body')[0]).appendChild(style)
+		}
 	}
 	
 	function JSONscriptRequest(fullUrl) {
