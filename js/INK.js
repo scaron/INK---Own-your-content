@@ -1,8 +1,9 @@
 /* ------------------------------------------------------------------------
 	INK - Own your content plugin.
-	Version: 1.0.2
+	Version: 1.1
 	Description: INK add credits back to your site everytime a user copy/paste content.
 	Website: http://www.no-margin-for-errors.com/projects/ink-own-your-content/
+	Copyright: Stephane Caron 2011 - All rights reserved
 ------------------------------------------------------------------------- */
 
 var ink = function(){
@@ -11,15 +12,24 @@ var ink = function(){
 	var settings = {
 		copied_content_layout: '"{copied_content}"\n\rRead more about {title} on:\r\n{page_url}',
 		notice_content: ' \
-		<a href="#" onclick="ink.hide_notice(); return false;" style="color: #fff;position: absolute; right: 10px; top: 5px; font-size: 10px;">Close</a> \
-		<p style="color: #fff; margin: 0;"> \
-			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #fff;">INK</a> has been applied to the content you\'ve just copied<br /> \
-			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #fff;">What is INK?</a> | <a href="http://ink.nmfe.co/set-status.php?status=off&utm_source=INK&utm_medium=notice" target="_blank" style="color: #fff;">Disable INK</a> \
+		<img src="http://ink.nmfe.co/images/ink_small_logo.gif" style="float: left; margin: 0 5px 0 0;" /> \
+		<a href="#" onclick="ink.hide_notice(); return false;" style="color: #999;position: absolute; right: 10px; top: 5px; font-size: 10px;">Close</a> \
+		<p style="color: #999; margin: 0 0 10px 0; font-size: 12px;"> \
+			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #999;">INK</a> has been applied to the content you copied.<br /> \
+			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #999; font-size: 10px;">What is INK?</a> | <a href="http://ink.nmfe.co/set-status.php?status=off&utm_source=INK&utm_medium=notice" target="_blank" style="color: #999; font-size: 10px;">Disable INK</a> \
 		</p>',
-		google_analytics : {
+		share_your_copy_label: 'Share your copy:',
+		styling: {
+			border_radius: 10
+		},
+		google_analytics : { // Custom Google Analytics tracking code. Feel free to change this to suit your needs.
 			utm_source:'INK',
 			utm_medium:'copy',
 			utm_campaign:'share'
+		},
+		sharing : true, // Set to false if you don't want the users to be able to share
+		twitter : { // If a user shares content from INK, this is the username that should be credited for the tweet (... via @username)
+			username : false
 		},
 		onBeforeCopy: function(){
 			
@@ -95,7 +105,7 @@ var ink = function(){
 		
 		// Call home to make sure users allow INK to run
 		request = 'http://ink.nmfe.co/read-status.php?callback=ink.status&license='+ink_license;
-		aObj = new JSONscriptRequest(request);
+		aObj = new JSONscriptRequest(request,true);
 		aObj.buildScriptTag();
 		aObj.addScriptTag();
 		
@@ -160,25 +170,44 @@ var ink = function(){
 				currSelection.addRange(cached_selected_content.range)
 			}
 			
-			_display_notice();
+			_display_notice(cached_selected_content.selection);
 		},1);
 	};
 	
-	function _display_notice(){
+	function _display_notice(selected_content){
 		if(typeof notice == 'undefined') {
 			notice = document.createElement('div');
-			notice.innerHTML = settings.notice_content
+			notice.innerHTML =  settings.notice_content
 			
-			if(ads_enabled)
-				 notice.innerHTML += '<div id="bsap_1258551" class="bsarocks bsap_d49a0984d0f377271ccbf01a33f2b6d6" style="color: #fff; width: 340px; margin-top: 10px;"></div>';
+			if(ads_enabled) // Inject the ad code
+				 notice.innerHTML += '<div id="bsap_1258551" class="bsarocks bsap_d49a0984d0f377271ccbf01a33f2b6d6" style="color: #999; width: 340px; clear: left;"></div>';
+				
+			if(settings.sharing) { // Inject the sharing tools
+				if(settings.twitter.username){
+					notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">'+settings.share_your_copy_label+'</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none" data-via="'+settings.twitter.username+'">Tweet</a></div><fb:like href="" layout="button_count" show_faces="false" width="30" font=""></fb:like></div>';
+				}else{
+					notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">Share your copy:</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none">Tweet</a></div><fb:like href="" layout="button_count" show_faces="false" width="30" font=""></fb:like></div>';
+				}
+
+				twitter_script = 'http://platform.twitter.com/widgets.js';
+				twitter_share = new JSONscriptRequest(twitter_script,false);
+				twitter_share.buildScriptTag();
+				twitter_share.addScriptTag();
+
+				fb_script = 'http://connect.facebook.net/en_US/all.js#xfbml=1';
+				fb_share = new JSONscriptRequest(fb_script,false);
+				fb_share.buildScriptTag();
+				fb_share.addScriptTag();
+			}
 			
-			notice.setAttribute('style','background: rgba(0,0,0,0.7); position: absolute; border-radius: 10px; -moz-border-radius: 10px; -webkit-border-radius: 10px; -moz-box-shadow: 0px 0px 10px rgba(0,0,0,0.8); -webkit-box-shadow: 0px 0px 10px rgba(0,0,0,0.8); box-shadow: 0px 0px 10px rgba(0,0,0,0.8);')
+			// Style everything
+			notice.setAttribute('style','background-image: -webkit-gradient(linear,left bottom,left top,color-stop(0.49, rgb(238,238,238)),color-stop(1, rgb(255,255,255))); background-image: -moz-linear-gradient(center bottom,rgb(238,238,238) 49%,rgb(255,255,255) 100%); position: absolute; border-radius: '+settings.styling.border_radius+'px; -moz-border-radius: '+settings.styling.border_radius+'px; -webkit-border-radius: '+settings.styling.border_radius+'px; -moz-box-shadow: 0px 0px 1px rgba(0,0,0,0.8); -webkit-box-shadow: 0px 0px 1px rgba(0,0,0,0.8); box-shadow: 0px 0px 5px rgba(0,0,0,0.7);')
 			if(document.selection)
-				notice.style.backgroundColor = '#000';
+				notice.style.backgroundColor = '#fff';
 			notice.style.fontSize = "12px";
 			notice.style.paddingTop = "20px";
 			notice.style.paddingRight = "10px";
-			notice.style.paddingBottom = "15px";
+			notice.style.paddingBottom = "0";
 			notice.style.paddingLeft = "10px";
 			notice.style.position = "absolute";
 			notice.style.textAlign = 'left';
@@ -190,7 +219,10 @@ var ink = function(){
 			
 			if(ads_enabled)
 				_bsap.exec();
-			
+		
+			document.getElementById('ink_notice').onmouseover = function(){
+				clearTimeout(hide_timeout);
+			}
 		
 			hide_timeout = window.setTimeout(function(){
 				hide_notice();
@@ -296,11 +328,11 @@ var ink = function(){
 		}
 	}
 	
-	function JSONscriptRequest(fullUrl) {
+	function JSONscriptRequest(fullUrl,cache) {
 	    // REST request path
 	    this.fullUrl = fullUrl; 
 	    // Keep IE from caching requests
-	    this.noCacheIE = '&noCacheIE=' + (new Date()).getTime();
+		this.noCacheIE = (cache) ? '&noCacheIE=' + (new Date()).getTime() : '';
 	    // Get the DOM location to put the script tag
 	    this.headLoc = document.getElementsByTagName("head").item(0);
 	    // Generate a unique script tag id
