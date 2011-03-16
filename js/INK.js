@@ -184,24 +184,19 @@ var ink = function(){
 				
 			if(settings.sharing) { // Inject the sharing tools
 				if(settings.twitter.username){
-					notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">'+settings.share_your_copy_label+'</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none" data-via="'+settings.twitter.username+'">Tweet</a></div><fb:like href="" layout="button_count" show_faces="false" width="30" font=""></fb:like></div>';
+					notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">'+settings.share_your_copy_label+'</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none" data-via="'+settings.twitter.username+'">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
 				}else{
-					notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">Share your copy:</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none">Tweet</a></div><fb:like href="" layout="button_count" show_faces="false" width="30" font=""></fb:like></div>';
+					notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">Share your copy:</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
 				}
 
 				twitter_script = 'http://platform.twitter.com/widgets.js';
 				twitter_share = new JSONscriptRequest(twitter_script,false);
 				twitter_share.buildScriptTag();
 				twitter_share.addScriptTag();
-
-				fb_script = 'http://connect.facebook.net/en_US/all.js#xfbml=1';
-				fb_share = new JSONscriptRequest(fb_script,false);
-				fb_share.buildScriptTag();
-				fb_share.addScriptTag();
 			}
 			
 			// Style everything
-			notice.setAttribute('style','background-image: -webkit-gradient(linear,left bottom,left top,color-stop(0.49, rgb(238,238,238)),color-stop(1, rgb(255,255,255))); background-image: -moz-linear-gradient(center bottom,rgb(238,238,238) 49%,rgb(255,255,255) 100%); position: absolute; border-radius: '+settings.styling.border_radius+'px; -moz-border-radius: '+settings.styling.border_radius+'px; -webkit-border-radius: '+settings.styling.border_radius+'px; -moz-box-shadow: 0px 0px 1px rgba(0,0,0,0.8); -webkit-box-shadow: 0px 0px 1px rgba(0,0,0,0.8); box-shadow: 0px 0px 5px rgba(0,0,0,0.7);')
+			notice.setAttribute('style','background-image: -webkit-gradient(linear,left bottom,left top,color-stop(0.49, rgb(238,238,238)),color-stop(1, rgb(255,255,255))); background-image: -moz-linear-gradient(center bottom,rgb(238,238,238) 49%,rgb(255,255,255) 100%); position: absolute; border-radius: '+settings.styling.border_radius+'px; -moz-border-radius: '+settings.styling.border_radius+'px; -webkit-border-radius: '+settings.styling.border_radius+'px; -moz-box-shadow: 0px 0px 5px rgba(0,0,0,0.7); -webkit-box-shadow: 0px 0px 5px rgba(0,0,0,0.7); box-shadow: 0px 0px 5px rgba(0,0,0,0.7);')
 			if(document.selection)
 				notice.style.backgroundColor = '#fff';
 			notice.style.fontSize = "12px";
@@ -213,6 +208,7 @@ var ink = function(){
 			notice.style.textAlign = 'left';
 			notice.style.top = (_get_scroll() + 25) + 'px';
 			notice.style.right = '25px';
+			notice.style.width = '350px';
 			notice.style.zIndex = 10000;
 			notice.setAttribute('id','ink_notice');
 			document.body.appendChild(notice);
