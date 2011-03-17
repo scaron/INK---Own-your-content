@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------------
 	INK - Own your content plugin.
-	Version: 1.2
+	Version: 1.2.1
 	Description: INK add credits back to your site everytime a user copy/paste content.
 	Website: http://www.no-margin-for-errors.com/projects/ink-own-your-content/
 	Copyright: Stephane Caron 2011 - All rights reserved
