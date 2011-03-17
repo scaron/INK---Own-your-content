@@ -1,22 +1,31 @@
 /* ------------------------------------------------------------------------
 	INK - Own your content plugin.
-	Version: 1.1
+	Version: 1.2
 	Description: INK add credits back to your site everytime a user copy/paste content.
 	Website: http://www.no-margin-for-errors.com/projects/ink-own-your-content/
 	Copyright: Stephane Caron 2011 - All rights reserved
 ------------------------------------------------------------------------- */
 
 var ink = function(){
-	var url_to_share, enabled, hide_timeout, ads_enabled;
+	var url_to_share, enabled=true, hide_timeout, ads_enabled=true, children_nodes, parent_node, content_type, content_html;
 	
 	var settings = {
-		copied_content_layout: '"{copied_content}"\n\rRead more about {title} on:\r\n{page_url}',
-		notice_content: ' \
-		<img src="http://ink.nmfe.co/images/ink_small_logo.gif" style="float: left; margin: 0 5px 0 0;" /> \
+		copied_content_text_layout: '“{copied_content}”\n\rRead more about {title} on:\r\n{page_url}',
+		copied_content_media_layout: '{copied_content}<p>Found on: <a href="{page_url}">{title}</a></p>',
+		notice_content_text: ' \
+		<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="float: left; margin: 0 5px 0 0;"><img src="http://ink.nmfe.co/images/ink_small_logo.gif" /></a> \
 		<a href="#" onclick="ink.hide_notice(); return false;" style="color: #999;position: absolute; right: 10px; top: 5px; font-size: 10px;">Close</a> \
 		<p style="color: #999; margin: 0 0 10px 0; font-size: 12px;"> \
 			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #999;">INK</a> has been applied to the content you copied.<br /> \
 			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #999; font-size: 10px;">What is INK?</a> | <a href="http://ink.nmfe.co/set-status.php?status=off&utm_source=INK&utm_medium=notice" target="_blank" style="color: #999; font-size: 10px;">Disable INK</a> \
+		</p>',
+		notice_content_media: ' \
+		<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="float: left; margin: 0 5px 5px 0;"><img src="http://ink.nmfe.co/images/ink_small_logo.gif" /></a> \
+		<a href="#" onclick="ink.hide_notice(); return false;" style="color: #999;position: absolute; right: 10px; top: 5px; font-size: 10px;">Close</a> \
+		<p style="color: #999; margin: 0 0 10px 0; font-size: 12px;"> \
+			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #999;">INK</a> detected that you copied a {content_type}.<br /> \
+			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #999; font-size: 10px;">What is INK?</a> | <a href="http://ink.nmfe.co/set-status.php?status=off&utm_source=INK&utm_medium=notice" target="_blank" style="color: #999; font-size: 10px;">Disable INK</a> \
+			<br style="clear:left;" />Please give credit to the content owner by using the following HTML for your blog or site.<br /><textarea style="width:330px;height:70px;margin-top:5px;font-size:10px;font-family:arial" onclick="this.select();">{currated_content}</textarea> \
 		</p>',
 		share_your_copy_label: 'Share your copy:',
 		styling: {
@@ -48,7 +57,7 @@ var ink = function(){
 				'active' : false
 			}
 		},
-		dom_nodes_excluded: ['img','object','video','pre'], // These are the nodeTypes that you don't want to be in inked when copied.
+		dom_nodes_excluded: ['img','object','embed','video','pre','iframe','textarea'], // These are the nodeTypes that you don't want to be in inked when copied.
 		class_excluded: ['no-ink']
 	};
 	
@@ -124,9 +133,9 @@ var ink = function(){
 	
 	function copy(){
 		// Cache the current selected text and the range
-		var cached_selected_content = _getSelectedContent(),
-			children_nodes,
-			parent_node;
+		var cached_selected_content = _getSelectedContent();
+			
+		content_type = 'text';
 		
 		if (document.selection) {
 			scroll_cache = _get_scroll();
@@ -145,87 +154,104 @@ var ink = function(){
 			parent_node = cached_selected_content.selection.anchorNode.parentNode;
 		}
 
-		if(!_validate_content(children_nodes,parent_node,'down') || !enabled) return;
-		
 		if(settings.google_analytics)
 			_track_google_analytic_event(cached_selected_content.selection);
-		
-		// Copy the user's selected content to the holder and select it to have it copied
-		content_to_share = settings.copied_content_layout;
-		content_to_share = content_to_share.replace(/{copied_content}/g,cached_selected_content.selection)
-											.replace(/{title}/g,document.title)
-											.replace(/{page_url}/g,url_to_share);
-						
-		document.getElementById('copy_holder').value = content_to_share;
-		document.getElementById('copy_holder').select();
 
-		// Re-select the content the user selected to maintain a good ux.
-		setTimeout(function(){
-			if(document.selection){ // IE
-				cached_selected_content.range.select();
-				document.documentElement.scrollTop = scroll_cache;
-			}else{ // The others
-				var currSelection = window.getSelection();
-				currSelection.removeAllRanges();
-				currSelection.addRange(cached_selected_content.range)
-			}
+		if(!enabled){
+			return;
+		}else if(!_validate_content(children_nodes,parent_node,'down')){
+			if(content_type == 'picture' || content_type == 'video')
+				_display_notice(cached_selected_content.selection);
+			return;
+		}else{	
+			// Copy the user's selected content to the holder and select it to have it copied
+			content_to_share = settings.copied_content_text_layout;
+			content_to_share = content_to_share.replace(/{copied_content}/g,cached_selected_content.selection)
+												.replace(/{title}/g,document.title)
+												.replace(/{page_url}/g,url_to_share);
+						
+			document.getElementById('copy_holder').value = content_to_share;
+			document.getElementById('copy_holder').select();
+
+			// Re-select the content the user selected to maintain a good ux.
+			setTimeout(function(){
+				if(document.selection){ // IE
+					cached_selected_content.range.select();
+					document.documentElement.scrollTop = scroll_cache;
+				}else{ // The others
+					var currSelection = window.getSelection();
+					currSelection.removeAllRanges();
+					currSelection.addRange(cached_selected_content.range)
+				}
 			
-			_display_notice(cached_selected_content.selection);
-		},1);
+				_display_notice(cached_selected_content.selection);
+			},1);
+		}
 	};
 	
 	function _display_notice(selected_content){
-		if(typeof notice == 'undefined') {
-			notice = document.createElement('div');
-			notice.innerHTML =  settings.notice_content
+		if(typeof notice != 'undefined') hide_notice();
 			
-			if(ads_enabled) // Inject the ad code
-				 notice.innerHTML += '<div id="bsap_1258551" class="bsarocks bsap_d49a0984d0f377271ccbf01a33f2b6d6" style="color: #999; width: 340px; clear: left;"></div>';
-				
-			if(settings.sharing) { // Inject the sharing tools
-				if(settings.twitter.username){
-					notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">'+settings.share_your_copy_label+'</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none" data-via="'+settings.twitter.username+'">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
-				}else{
-					notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">Share your copy:</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
-				}
-
-				twitter_script = 'http://platform.twitter.com/widgets.js';
-				twitter_share = new JSONscriptRequest(twitter_script,false);
-				twitter_share.buildScriptTag();
-				twitter_share.addScriptTag();
-			}
-			
-			// Style everything
-			notice.setAttribute('style','background-image: -webkit-gradient(linear,left bottom,left top,color-stop(0.49, rgb(238,238,238)),color-stop(1, rgb(255,255,255))); background-image: -moz-linear-gradient(center bottom,rgb(238,238,238) 49%,rgb(255,255,255) 100%); position: absolute; border-radius: '+settings.styling.border_radius+'px; -moz-border-radius: '+settings.styling.border_radius+'px; -webkit-border-radius: '+settings.styling.border_radius+'px; -moz-box-shadow: 0px 0px 5px rgba(0,0,0,0.7); -webkit-box-shadow: 0px 0px 5px rgba(0,0,0,0.7); box-shadow: 0px 0px 5px rgba(0,0,0,0.7);')
-			if(document.selection)
-				notice.style.backgroundColor = '#fff';
-			notice.style.fontSize = "12px";
-			notice.style.paddingTop = "20px";
-			notice.style.paddingRight = "10px";
-			notice.style.paddingBottom = "0";
-			notice.style.paddingLeft = "10px";
-			notice.style.position = "absolute";
-			notice.style.textAlign = 'left';
-			notice.style.top = (_get_scroll() + 25) + 'px';
-			notice.style.right = '25px';
-			notice.style.width = '350px';
-			notice.style.zIndex = 10000;
-			notice.setAttribute('id','ink_notice');
-			document.body.appendChild(notice);
-			
-			if(ads_enabled)
-				_bsap.exec();
+		notice = document.createElement('div');
+		notice.className = "no-ink";
 		
-			document.getElementById('ink_notice').onmouseover = function(){
-				clearTimeout(hide_timeout);
-			}
-		
-			hide_timeout = window.setTimeout(function(){
-				hide_notice();
-			},1000 * 10);
+		if(content_type == 'text'){
+			notice.innerHTML =  settings.notice_content_text;
 		}else{
-			notice.style.top = (_get_scroll() + 25) + 'px';
+			currated_content = settings.copied_content_media_layout;
+			currated_content = currated_content.replace(/{copied_content}/g,content_html)
+												.replace(/{page_url}/g,url_to_share)
+												.replace(/{title}/g,document.title)
+			
+			notice.innerHTML =  settings.notice_content_media;
+			notice.innerHTML = notice.innerHTML.replace(/{content_type}/g,content_type)
+												.replace(/{currated_content}/g,currated_content);
+		};
+		
+		if(ads_enabled) // Inject the ad code
+			 notice.innerHTML += '<div id="bsap_1258551" class="bsarocks bsap_d49a0984d0f377271ccbf01a33f2b6d6" style="color: #999; width: 340px; clear: left;"></div>';
+			
+		if(settings.sharing) { // Inject the sharing tools
+			if(settings.twitter.username){
+				notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">'+settings.share_your_copy_label+'</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none" data-via="'+settings.twitter.username+'">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
+			}else{
+				notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">Share your copy:</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
+			}
+
+			twitter_script = 'http://platform.twitter.com/widgets.js';
+			twitter_share = new JSONscriptRequest(twitter_script,false);
+			twitter_share.buildScriptTag();
+			twitter_share.addScriptTag();
 		}
+		
+		// Style everything
+		notice.setAttribute('style','background-image: -webkit-gradient(linear,left bottom,left top,color-stop(0.49, rgb(238,238,238)),color-stop(1, rgb(255,255,255))); background-image: -moz-linear-gradient(center bottom,rgb(238,238,238) 49%,rgb(255,255,255) 100%); position: absolute; border-radius: '+settings.styling.border_radius+'px; -moz-border-radius: '+settings.styling.border_radius+'px; -webkit-border-radius: '+settings.styling.border_radius+'px; -moz-box-shadow: 0px 0px 5px rgba(0,0,0,0.7); -webkit-box-shadow: 0px 0px 5px rgba(0,0,0,0.7); box-shadow: 0px 0px 5px rgba(0,0,0,0.7);')
+		if(document.selection)
+			notice.style.backgroundColor = '#fff';
+		notice.style.fontSize = "12px";
+		notice.style.paddingTop = "20px";
+		notice.style.paddingRight = "10px";
+		notice.style.paddingBottom = "0";
+		notice.style.paddingLeft = "10px";
+		notice.style.position = "absolute";
+		notice.style.textAlign = 'left';
+		notice.style.top = (_get_scroll() + 25) + 'px';
+		notice.style.right = '25px';
+		notice.style.width = '350px';
+		notice.style.zIndex = 10000;
+		notice.setAttribute('id','ink_notice');
+		document.body.appendChild(notice);
+		
+		if(ads_enabled)
+			_bsap.exec();
+	
+		document.getElementById('ink_notice').onmouseover = function(){
+			clearTimeout(hide_timeout);
+		}
+	
+		hide_timeout = window.setTimeout(function(){
+			hide_notice();
+		},1000 * 10);
 	}
 	
 	function hide_notice(){
@@ -246,8 +272,10 @@ var ink = function(){
 				// Recursivelly loop through all the children
 				if(children_nodes.childNodes[i].childNodes.length > 1 && children_nodes.childNodes[i].nodeType != 3){ return _validate_content(children_nodes.childNodes[i],null,'down') }
 
-				if(settings.dom_nodes_excluded.indexOf(node_name) > -1 || settings.class_excluded.indexOf(node_class) > -1)
+				if(settings.dom_nodes_excluded.indexOf(node_name) > -1 || settings.class_excluded.indexOf(node_class) > -1){
+					_content_type(children_nodes.childNodes[i])
 					return false;
+				}
 			};
 		};
 
@@ -263,7 +291,48 @@ var ink = function(){
 			return _validate_content(parent_node.parentNode);
 		};
 		
+		content_type = 'text';
 		return true;
+	}
+	
+	// Sets the copied content content type. This is later used in the notice to contextualize it.
+	function _content_type(copied_node){
+		var node_name = copied_node.nodeName;
+			node_name = node_name.toLowerCase();
+
+		// Define the content type
+		switch(node_name) {
+			case 'img':
+				content_type = 'picture';
+			break;
+
+			case 'object':
+				content_type = 'video';
+			break;
+
+			case 'embed':
+				content_type = 'video';
+			break;
+
+			case 'video':
+				content_type = 'video';
+			break;
+
+			case 'iframe':
+				content_type = 'video';
+			break;
+		}
+		
+		// Clean the image node
+		if(content_type == 'picture'){
+			copied_node.src = copied_node.src;
+			copied_node.setAttribute('style','');
+		}
+		
+		// I need to get the HTML node as a string.
+		var tmp = document.createElement("div");
+		tmp.appendChild(copied_node);
+		content_html = tmp.innerHTML;
 	}
 	
 	function _getSelectedContent() {
