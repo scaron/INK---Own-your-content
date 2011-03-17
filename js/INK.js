@@ -23,7 +23,7 @@ var ink = function(){
 		<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="float: left; margin: 0 5px 5px 0;"><img src="http://ink.nmfe.co/images/ink_small_logo.gif" /></a> \
 		<a href="#" onclick="ink.hide_notice(); return false;" style="color: #999;position: absolute; right: 10px; top: 5px; font-size: 10px;">Close</a> \
 		<p style="color: #999; margin: 0 0 10px 0; font-size: 12px;"> \
-			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #999;">INK</a> detected that you copied a {content_type}.<br /> \
+			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #999;">INK</a> has detected that you copied a {content_type}.<br /> \
 			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #999; font-size: 10px;">What is INK?</a> | <a href="http://ink.nmfe.co/set-status.php?status=off&utm_source=INK&utm_medium=notice" target="_blank" style="color: #999; font-size: 10px;">Disable INK</a> \
 			<br style="clear:left;" />Please give credit to the content owner by using the following HTML for your blog or site.<br /><textarea style="width:330px;height:70px;margin-top:5px;font-size:10px;font-family:arial" onclick="this.select();">{currated_content}</textarea> \
 		</p>',
