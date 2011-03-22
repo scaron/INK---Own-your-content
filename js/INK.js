@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------------
 	INK - Own your content plugin.
-	Version: 1.2.1
+	Version: 1.2.2
 	Description: INK add credits back to your site everytime a user copy/paste content.
 	Website: http://www.no-margin-for-errors.com/projects/ink-own-your-content/
 	Copyright: Stephane Caron 2011 - All rights reserved
@@ -72,8 +72,9 @@ var ink = function(){
 		copy_holder.setAttribute('id','copy_holder');
 		copy_holder.style.width = '400px';
 		copy_holder.style.height = '200px';
-		copy_holder.style.position = 'absolute';
-		copy_holder.style.left = '-100000px';
+		copy_holder.style.position = 'fixed';
+		copy_holder.style.left = '-5000px';
+		copy_holder.style.top = '0';
 		document.body.appendChild(copy_holder);
 		
 		// Bind the copy events.
@@ -136,10 +137,10 @@ var ink = function(){
 		var cached_selected_content = _getSelectedContent();
 			
 		content_type = 'text';
-		
-		if (document.selection) {
-			scroll_cache = _get_scroll();
-			
+		if(window.getSelection){
+			children_nodes = cached_selected_content.range.cloneContents();
+			parent_node = cached_selected_content.selection.anchorNode.parentNode;
+		}else if (document.selection) { // IE
 			// Create a fragment, I need to do this because what htmlText is a string and I need to be able to parse the node tree
 			var frag = document.createElement('div');
 			frag.style.display = 'none';
@@ -149,9 +150,6 @@ var ink = function(){
 			children_nodes = document.getElementById('ink_frag'); // Cache the element
 			document.getElementById('ink_frag').removeNode(true); // Don't need it anymore
 			parent_node = cached_selected_content.range.parentElement();
-		}else{
-			children_nodes = cached_selected_content.range.cloneContents();
-			parent_node = cached_selected_content.selection.anchorNode.parentNode;
 		}
 
 		if(settings.google_analytics)
@@ -175,13 +173,12 @@ var ink = function(){
 
 			// Re-select the content the user selected to maintain a good ux.
 			setTimeout(function(){
-				if(document.selection){ // IE
-					cached_selected_content.range.select();
-					document.documentElement.scrollTop = scroll_cache;
-				}else{ // The others
+				if(window.getSelection){
 					var currSelection = window.getSelection();
 					currSelection.removeAllRanges();
 					currSelection.addRange(cached_selected_content.range)
+				}else if(document.selection){ // IE
+					cached_selected_content.range.select();
 				}
 			
 				_display_notice(cached_selected_content.selection);
@@ -213,9 +210,9 @@ var ink = function(){
 			
 		if(settings.sharing) { // Inject the sharing tools
 			if(settings.twitter.username){
-				notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">'+settings.share_your_copy_label+'</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none" data-via="'+settings.twitter.username+'">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
+				notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="float: left;line-height:21px;color: #fff;">'+settings.share_your_copy_label+'</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none" data-via="'+settings.twitter.username+'">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
 			}else{
-				notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="position: relative; top: -5px;color: #fff;">Share your copy:</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
+				notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="float: left;line-height:21px;color: #fff;">'+settings.share_your_copy_label+'</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
 			}
 
 			twitter_script = 'http://platform.twitter.com/widgets.js';
