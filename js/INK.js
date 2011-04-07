@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------------
 	INK - Own your content plugin.
-	Version: 1.2.2
+	Version: 1.2.3
 	Description: INK add credits back to your site everytime a user copy/paste content.
 	Website: http://www.no-margin-for-errors.com/projects/ink-own-your-content/
 	Copyright: Stephane Caron 2011 - All rights reserved
@@ -10,10 +10,10 @@ var ink = function(){
 	var url_to_share, enabled=true, hide_timeout, ads_enabled=true, children_nodes, parent_node, content_type, content_html;
 	
 	var settings = {
-		copied_content_text_layout: '“{copied_content}”\n\rRead more about {title} on:\r\n{page_url}',
+		copied_content_text_layout: '“{copied_content}”<br /><br />Read more about {title} on:<br />{page_url}',
 		copied_content_media_layout: '{copied_content}<p>Found on: <a href="{page_url}">{title}</a></p>',
-		notice_content_text: ' \
-		<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="float: left; margin: 0 5px 0 0;"><img src="http://ink.nmfe.co/images/ink_small_logo.gif" /></a> \
+		notice_content_markup: ' \
+		<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="float: left; margin: 0 5px 5px 0;"><img src="http://ink.nmfe.co/images/ink_small_logo.gif" /></a> \
 		<a href="#" onclick="ink.hide_notice(); return false;" style="color: #999;position: absolute; right: 10px; top: 5px; font-size: 10px;">Close</a> \
 		<p style="color: #999; margin: 0 0 10px 0; font-size: 12px;"> \
 			<a href="http://www.no-margin-for-errors.com/projects/ink-own-your-content/?utm_source=INK&utm_medium=notice" target="_blank" style="color: #999;">INK</a> has been applied to the content you copied.<br /> \
@@ -40,12 +40,8 @@ var ink = function(){
 		twitter : { // If a user shares content from INK, this is the username that should be credited for the tweet (... via @username)
 			username : false
 		},
-		onBeforeCopy: function(){
-			
-		},
-		onAfterCopy: function(){
-			
-		},
+		onBeforeCopy: function(){},
+		onAfterCopy: function(){},
 		urlshortener : {
 			/*
 				To get started you'll need a free bit.ly user account and API key - sign up at:
@@ -68,10 +64,8 @@ var ink = function(){
 		};
 		
 		// Create the what will contain the edited content to be copied
-		copy_holder = document.createElement('textarea');
+		copy_holder = document.createElement('div');
 		copy_holder.setAttribute('id','copy_holder');
-		copy_holder.style.width = '400px';
-		copy_holder.style.height = '200px';
 		copy_holder.style.position = 'fixed';
 		copy_holder.style.left = '-5000px';
 		copy_holder.style.top = '0';
@@ -168,8 +162,19 @@ var ink = function(){
 												.replace(/{title}/g,document.title)
 												.replace(/{page_url}/g,url_to_share);
 						
-			document.getElementById('copy_holder').value = content_to_share;
-			document.getElementById('copy_holder').select();
+			document.getElementById('copy_holder').innerHTML = content_to_share;
+			
+			if(document.selection){
+				var range = document.body.createTextRange();
+		        range.moveToElementText(copy_holder);
+		        range.select();
+			}else{
+				var selection = window.getSelection();
+		        var range = document.createRange();
+		        range.selectNodeContents(copy_holder);
+		        selection.removeAllRanges();
+		        selection.addRange(range);
+			}
 
 			// Re-select the content the user selected to maintain a good ux.
 			setTimeout(function(){
@@ -193,7 +198,7 @@ var ink = function(){
 		notice.className = "no-ink";
 		
 		if(content_type == 'text'){
-			notice.innerHTML =  settings.notice_content_text;
+			notice.innerHTML =  settings.notice_content_markup;
 		}else{
 			currated_content = settings.copied_content_media_layout;
 			currated_content = currated_content.replace(/{copied_content}/g,content_html)
@@ -301,23 +306,19 @@ var ink = function(){
 		switch(node_name) {
 			case 'img':
 				content_type = 'picture';
-			break;
-
+				break;
 			case 'object':
 				content_type = 'video';
-			break;
-
+				break;
 			case 'embed':
 				content_type = 'video';
-			break;
-
+				break;
 			case 'video':
 				content_type = 'video';
-			break;
-
+				break;
 			case 'iframe':
 				content_type = 'video';
-			break;
+				break;
 		}
 		
 		// Clean the image node
@@ -405,7 +406,6 @@ var ink = function(){
 	JSONscriptRequest.scriptCounter = 1;
 
 	// buildScriptTag method
-	//
 	JSONscriptRequest.prototype.buildScriptTag = function () {
 
 	    // Create the script tag
@@ -419,14 +419,12 @@ var ink = function(){
 	}
 
 	// removeScriptTag method
-	// 
 	JSONscriptRequest.prototype.removeScriptTag = function () {
 	    // Destroy the script tag
 	    this.headLoc.removeChild(this.scriptObj);  
 	}
 
 	// addScriptTag method
-	//
 	JSONscriptRequest.prototype.addScriptTag = function () {
 	    // Create the script tag
 	    this.headLoc.appendChild(this.scriptObj);
