@@ -83,8 +83,7 @@ var ink = function(){
 		if(settings.google_analytics){
 			(url_to_share.indexOf('?') == -1) ? url_to_share+="?" : url_to_share+="&";
 			
-			for(var key in settings.google_analytics)
-				url_to_share += key + '=' + settings.google_analytics[key] + '&';
+			for(var key in settings.google_analytics) url_to_share += key + '=' + settings.google_analytics[key] + '&';
 		};
 		
 		if (settings.urlshortener.bitly.active) {
@@ -144,11 +143,10 @@ var ink = function(){
 			children_nodes = document.getElementById('ink_frag'); // Cache the element
 			document.getElementById('ink_frag').removeNode(true); // Don't need it anymore
 			parent_node = cached_selected_content.range.parentElement();
-		}
+		};
 
 		if(settings.google_analytics)
 			_track_google_analytic_event(cached_selected_content.selection);
-
 		if(!enabled){
 			return;
 		}else if(!_validate_content(children_nodes,parent_node,'down')){
@@ -174,21 +172,21 @@ var ink = function(){
 		        range.selectNodeContents(copy_holder);
 		        selection.removeAllRanges();
 		        selection.addRange(range);
-			}
+			};
 
 			// Re-select the content the user selected to maintain a good ux.
 			setTimeout(function(){
 				if(window.getSelection){
 					var currSelection = window.getSelection();
 					currSelection.removeAllRanges();
-					currSelection.addRange(cached_selected_content.range)
+					currSelection.addRange(cached_selected_content.range);
 				}else if(document.selection){ // IE
 					cached_selected_content.range.select();
-				}
+				};
 			
 				_display_notice(cached_selected_content.selection);
 			},1);
-		}
+		};
 	};
 	
 	function _display_notice(selected_content){
@@ -203,7 +201,7 @@ var ink = function(){
 			currated_content = settings.copied_content_media_layout;
 			currated_content = currated_content.replace(/{copied_content}/g,content_html)
 												.replace(/{page_url}/g,url_to_share)
-												.replace(/{title}/g,document.title)
+												.replace(/{title}/g,document.title);
 			
 			notice.innerHTML =  settings.notice_content_media;
 			notice.innerHTML = notice.innerHTML.replace(/{content_type}/g,content_type)
@@ -218,18 +216,17 @@ var ink = function(){
 				notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="float: left;line-height:21px;color: #fff;">'+settings.share_your_copy_label+'</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none" data-via="'+settings.twitter.username+'">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
 			}else{
 				notice.innerHTML += '<div style="margin:10px 0; background: #333; margin: 0 -10px 0 -10px; padding: 5px 0 5px 10px; border-bottom-left-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomleft:'+settings.styling.border_radius+'px;-webkit-border-bottom-left-radius:'+settings.styling.border_radius+'px;border-bottom-right-radius:'+settings.styling.border_radius+'px;-moz-border-radius-bottomright:'+settings.styling.border_radius+'px;-webkit-border-bottom-right-radius:'+settings.styling.border_radius+'px;border-top:1px #000 solid;width:360px;float:left;"><div style="margin-right:5px;float:left;"><span style="float: left;line-height:21px;color: #fff;">'+settings.share_your_copy_label+'</span>&nbsp;&nbsp;<a href="http://twitter.com/share" class="twitter-share-button" data-text="'+selected_content+'" data-count="none">Tweet</a></div><iframe src="http://www.facebook.com/plugins/like.php?href&amp;layout=button_count&amp;show_faces=false&amp;width=60&amp;action=like&amp;font=arial&amp;colorscheme=light&amp;height=21" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:60px; height:21px;" allowTransparency="true"></iframe></div>';
-			}
+			};
 
 			twitter_script = 'http://platform.twitter.com/widgets.js';
 			twitter_share = new JSONscriptRequest(twitter_script,false);
 			twitter_share.buildScriptTag();
 			twitter_share.addScriptTag();
-		}
+		};
 		
 		// Style everything
-		notice.setAttribute('style','background-image: -webkit-gradient(linear,left bottom,left top,color-stop(0.49, rgb(238,238,238)),color-stop(1, rgb(255,255,255))); background-image: -moz-linear-gradient(center bottom,rgb(238,238,238) 49%,rgb(255,255,255) 100%); position: absolute; border-radius: '+settings.styling.border_radius+'px; -moz-border-radius: '+settings.styling.border_radius+'px; -webkit-border-radius: '+settings.styling.border_radius+'px; -moz-box-shadow: 0px 0px 5px rgba(0,0,0,0.7); -webkit-box-shadow: 0px 0px 5px rgba(0,0,0,0.7); box-shadow: 0px 0px 5px rgba(0,0,0,0.7);')
-		if(document.selection)
-			notice.style.backgroundColor = '#fff';
+		notice.setAttribute('style','background-image: -webkit-gradient(linear,left bottom,left top,color-stop(0.49, rgb(238,238,238)),color-stop(1, rgb(255,255,255))); background-image: -moz-linear-gradient(center bottom,rgb(238,238,238) 49%,rgb(255,255,255) 100%); position: absolute; border-radius: '+settings.styling.border_radius+'px; -moz-border-radius: '+settings.styling.border_radius+'px; -webkit-border-radius: '+settings.styling.border_radius+'px; -moz-box-shadow: 0px 0px 5px rgba(0,0,0,0.7); -webkit-box-shadow: 0px 0px 5px rgba(0,0,0,0.7); box-shadow: 0px 0px 5px rgba(0,0,0,0.7);');
+		if(document.selection) notice.style.backgroundColor = '#fff';
 		notice.style.fontSize = "12px";
 		notice.style.paddingTop = "20px";
 		notice.style.paddingRight = "10px";
@@ -244,23 +241,22 @@ var ink = function(){
 		notice.setAttribute('id','ink_notice');
 		document.body.appendChild(notice);
 		
-		if(ads_enabled)
-			_bsap.exec();
+		if(ads_enabled) _bsap.exec();
 	
 		document.getElementById('ink_notice').onmouseover = function(){
 			clearTimeout(hide_timeout);
-		}
+		};
 	
 		hide_timeout = window.setTimeout(function(){
 			hide_notice();
 		},1000 * 10);
-	}
+	};
 	
 	function hide_notice(){
 		clearTimeout(hide_timeout);
 		document.body.removeChild(notice);
 		delete notice;
-	}
+	};
 	
 	function _validate_content(children_nodes,parent_node,direction){
 		var node_class, node_name;
@@ -272,12 +268,12 @@ var ink = function(){
 				node_name = node_name.toLowerCase();
 
 				// Recursivelly loop through all the children
-				if(children_nodes.childNodes[i].childNodes.length > 1 && children_nodes.childNodes[i].nodeType != 3){ return _validate_content(children_nodes.childNodes[i],null,'down') }
+				if(children_nodes.childNodes[i].childNodes.length > 1 && children_nodes.childNodes[i].nodeType != 3){ return _validate_content(children_nodes.childNodes[i],null,'down'); };
 
 				if(settings.dom_nodes_excluded.indexOf(node_name) > -1 || settings.class_excluded.indexOf(node_class) > -1){
-					_content_type(children_nodes.childNodes[i])
+					_content_type(children_nodes.childNodes[i]);
 					return false;
-				}
+				};
 			};
 		};
 
@@ -319,47 +315,47 @@ var ink = function(){
 			case 'iframe':
 				content_type = 'video';
 				break;
-		}
+		};
 		
 		// Clean the image node
 		if(content_type == 'picture'){
 			copied_node.src = copied_node.src;
 			copied_node.setAttribute('style','');
-		}
+		};
 		
 		// I need to get the HTML node as a string.
 		var tmp = document.createElement("div");
 		tmp.appendChild(copied_node);
 		content_html = tmp.innerHTML;
-	}
+	};
 	
 	function _getSelectedContent() {
 		if (window.getSelection){
 			return {
 				selection: window.getSelection(),
 				range: window.getSelection().getRangeAt(0)
-			}
+			};
 		} else if (document.getSelection) {
 			return {
 				selection: document.getSelection(),
 				range: document.getSelection().getRangeAt(0)
-			}
+			};
 		} else if (document.selection) {
 			return {
 				selection: document.selection.createRange().text,
 				range: document.selection.createRange()
-			}
+			};
 		} else {
 			return false;
-		}
-	}
+		};
+	};
 	
 	// If Google Analytics is installed, INK will automatically track content.
 	function _track_google_analytic_event(shared_content){
 		if(typeof _gaq != 'undefined'){ // Make sure GA is installed
 			_gaq.push(['_trackEvent', 'INK', 'Copy', shared_content]);
-		}
-	}
+		};
+	};
 	
 	// Callback function on the INK status check.
 	function status(jsonData) {
@@ -386,10 +382,10 @@ var ink = function(){
 			} else { // w3c
 				var cssText = document.createTextNode(cssStr);
 				style.appendChild(cssText);
-			}
-			(document.getElementsByTagName('head')[0]||document.getElementsByTagName('body')[0]).appendChild(style)
-		}
-	}
+			};
+			(document.getElementsByTagName('head')[0]||document.getElementsByTagName('body')[0]).appendChild(style);
+		};
+	};
 	
 	function JSONscriptRequest(fullUrl,cache) {
 	    // REST request path
@@ -400,7 +396,7 @@ var ink = function(){
 	    this.headLoc = document.getElementsByTagName("head").item(0);
 	    // Generate a unique script tag id
 	    this.scriptId = 'JscriptId' + JSONscriptRequest.scriptCounter++;
-	}
+	};
 
 	// Static script ID counter
 	JSONscriptRequest.scriptCounter = 1;
@@ -416,19 +412,19 @@ var ink = function(){
 	    this.scriptObj.setAttribute("charset", "utf-8");
 	    this.scriptObj.setAttribute("src", this.fullUrl + this.noCacheIE);
 	    this.scriptObj.setAttribute("id", this.scriptId);
-	}
+	};
 
 	// removeScriptTag method
 	JSONscriptRequest.prototype.removeScriptTag = function () {
 	    // Destroy the script tag
 	    this.headLoc.removeChild(this.scriptObj);  
-	}
+	};
 
 	// addScriptTag method
 	JSONscriptRequest.prototype.addScriptTag = function () {
 	    // Create the script tag
 	    this.headLoc.appendChild(this.scriptObj);
-	}
+	};
 	
 	function _get_scroll(){
 		if (self.pageYOffset) {
